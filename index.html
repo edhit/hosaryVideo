@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru" x-data="app()" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Husary Video Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #16a34a;
+        --primary-dark: #15803d;
+        --secondary: #2563eb;
+        --light-bg: #f8fafc;
+        --dark-text: #1e293b;
+      }
+
+      body {
+        background: linear-gradient(135deg, var(--light-bg) 0%, #e2e8f0 100%);
+        min-height: 100vh;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      .card {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .input-field {
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .input-field:focus {
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+      }
+
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--primary-dark) 100%
+        );
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(22, 163, 74, 0.3);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px -1px rgba(22, 163, 74, 0.4);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0);
+      }
+
+      #logs-general {
+        background: #0f172a;
+        color: #d9f99d;
+        font-family: "Fira Code", "Monaco", "Cascadia Code", "Roboto Mono",
+          monospace;
+        font-size: 0.9rem;
+        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        border: 1px solid #334155;
+      }
+
+      .log-entry {
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+      }
+
+      .log-entry::before {
+        content: "> ";
+        color: var(--primary);
+        margin-right: 8px;
+        font-weight: bold;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .logo-icon {
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--secondary) 100%
+        );
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+      }
+
+      .section-title {
+        position: relative;
+        display: inline-block;
+        padding-bottom: 5px;
+      }
+
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 50%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary), transparent);
+        border-radius: 3px;
+      }
+
+      .tooltip {
+        position: relative;
+        display: inline-block;
+        margin-left: 8px;
+        color: #64748b;
+      }
+
+      .tooltip .tooltip-text {
+        visibility: hidden;
+        width: 200px;
+        background-color: #1e293b;
+        color: white;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 0.8rem;
+      }
+
+      .tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .logo-text {
+          font-size: 1.5rem;
+        }
+      }
+
+      .log-entry span {
+        font-family: monospace;
+        font-size: 0.8rem;
+      }
+    </style>
+    <style>
+      .tab-btn.active {
+        background: white;
+        font-weight: bold;
+        border-left: 4px solid #22c55e; /* зеленая полоска */
+      }
+    </style>
+  </head>
+
+  <body class="flex justify-center pb-5">
+    <div class="flex overflow-hidden w-full max-w-4xl">
+      <!-- Sidebar -->
+      <div class="w-48 p-4 space-y-2">
+        <button
+          class="tab-btn w-full text-left px-3 py-2 rounded"
+          :class="{ 'active': currentPage==='form' }"
+          @click="currentPage='form'"
+        >
+          📹 Video Maker
+        </button>
+        <button
+          class="tab-btn w-full text-left px-3 py-2 rounded"
+          :class="{ 'active': currentPage==='settings' }"
+          @click="currentPage='settings'"
+        >
+          ⚙️ Настройки
+        </button>
+        <button
+          class="tab-btn w-full text-left px-3 py-2 rounded"
+          :class="{ 'active': currentPage==='about' }"
+          @click="currentPage='about'"
+        >
+          ℹ️ О программе
+        </button>
+      </div>
+
+      <!-- Main Content -->
+      <div class="container max-w-2xl mx-auto flex-1">
+        <!-- Форма -->
+        <div class="card p-8" x-show="currentPage==='form'">
+          <div class="logo mb-8 flex items-center gap-3">
+            <div
+              class="logo-icon w-12 h-12 flex items-center justify-center rounded-full text-white text-2xl"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--primary),
+                  var(--secondary)
+                );
+              "
+            >
+              <i class="fas fa-quran"></i>
+            </div>
+            <h1
+              class="logo-text text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent"
+            >
+              Husary Video Maker
+            </h1>
+          </div>
+
+          <div class="space-y-6">
+            <!-- Сура -->
+            <div>
+              <label class="block mb-2 font-medium">Номер суры</label>
+              <input
+                type="number"
+                min="1"
+                max="114"
+                x-model="surah"
+                class="input-field w-full px-4 py-3 border rounded-xl"
+                placeholder="Введите номер суры"
+              />
+            </div>
+
+            <!-- Аяты -->
+            <div>
+              <label class="block mb-2 font-medium">Диапазон аятов</label>
+              <input
+                type="text"
+                x-model="range"
+                class="input-field w-full px-4 py-3 border rounded-xl"
+                placeholder="Пример: 1-7 или 1,2,3"
+              />
+            </div>
+            <!-- Фото -->
+            <div>
+              <label class="block mb-2 font-medium">Выберите фото</label>
+
+              <div
+                class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-green-500 transition"
+                @click="$refs.fileInput.click()"
+                @dragover.prevent
+                @drop.prevent="handlePhoto($event)"
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  x-ref="fileInput"
+                  @change="handlePhoto"
+                />
+
+                <template x-if="!photoPreview">
+                  <div class="flex flex-col items-center text-gray-500">
+                    <i class="fas fa-camera text-4xl mb-2"></i>
+                    <span>Нажмите или перетащите фото сюда</span>
+                  </div>
+                </template>
+
+                <template x-if="photoPreview">
+                  <div class="relative inline-block">
+                    <img
+                      :src="photoPreview"
+                      class="mx-auto w-40 h-40 object-cover rounded-xl shadow-md border"
+                    />
+                    <button
+                      type="button"
+                      class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 text-xs hover:bg-red-700"
+                      @click="photoPreview=null; photoFile=null"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Кнопка -->
+            <div class="flex gap-3">
+              <button
+                @click="startVideo"
+                class="btn-primary w-full text-white font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2"
+                :disabled="processing"
+              >
+                <i
+                  :class="processing ? 'fas fa-cog fa-spin' : 'fas fa-play-circle'"
+                ></i>
+                <span
+                  x-text="processing ? 'Обработка...' : 'Запустить создание видео'"
+                ></span>
+              </button>
+              <button
+                x-show="processing"
+                @click="stopVideo"
+                class="bg-red-600 hover:bg-red-700 w-full text-white font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2"
+              >
+                <i class="fas fa-stop-circle"></i>
+                <span>Остановить</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Настройки -->
+        <div class="card p-8" x-show="currentPage==='settings'">
+          <h2 class="text-xl font-bold mb-4">⚙️ Отправка видео в Telegram</h2>
+
+          <div class="mb-4">
+            <label class="block mb-2 font-medium">Bot Token</label>
+            <input
+              type="text"
+              x-model="token"
+              class="input-field w-full px-4 py-3 border rounded-xl"
+              placeholder="Введите токен"
+            />
+          </div>
+
+          <div class="mb-4">
+            <label class="block mb-2 font-medium">Chat ID или @канал</label>
+            <input
+              type="text"
+              x-model="chatid"
+              class="input-field w-full px-4 py-3 border rounded-xl"
+              placeholder="@my_channel или 123456789"
+            />
+          </div>
+
+          <!-- <div class="mb-6">
+            <label class="block mb-2 font-medium">Язык</label>
+            <select
+              x-model="language"
+              class="w-full px-4 py-3 border rounded-xl"
+            >
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+              <option value="ar">العربية</option>
+            </select>
+          </div> -->
+
+          <button
+            class="btn-primary w-full text-white font-bold py-4 px-4 rounded-xl flex items-center justify-center gap-2"
+            @click="startTelegram"
+            :disabled="processing"
+          >
+            <i
+              :class="processing ? 'fas fa-cog fa-spin' : 'fas fa-play-circle'"
+            ></i>
+            <span x-text="processing ? 'Сохранение...' : 'Сохранить'"></span>
+          </button>
+        </div>
+        <!-- О программе -->
+        <div class="card p-8" x-show="currentPage==='about'">
+          <h2
+            class="text-2xl font-bold mb-4 flex items-center gap-2 text-green-700"
+          >
+            <i class="fas fa-info-circle"></i> О программе
+          </h2>
+
+          <p class="text-gray-700 leading-relaxed mb-4">
+            <span class="font-semibold">Husary Video Maker</span> — это
+            приложение для создания красивых видеороликов с аятами из Корана в
+            озвучке шейха
+            <span class="font-semibold">Мухаммада Халиль аль-Хусари</span>.
+            Программа поможет вам генерировать ролики для изучения, повторения
+            или публикации в соцсетях.
+          </p>
+
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">Возможности:</h3>
+          <ul class="list-disc list-inside space-y-1 text-gray-600 mb-4">
+            <li>Выбор суры и диапазона аятов (например: 1-7 или 1,2,3)</li>
+            <li>Автоматическая генерация аудио с чтением Хусари</li>
+            <li>Наложение арабского текста аятов на фон</li>
+            <li>Загрузка собственного изображения для видео</li>
+            <li>Создание отдельного видео для каждого аята и объединение их</li>
+            <li>Пошаговый прогресс и лог выполнения прямо в интерфейсе</li>
+          </ul>
+
+          <div class="bg-green-50 border-l-4 border-green-600 p-4 rounded-md">
+            <p class="text-green-800 text-sm">
+              📌 Программа создана для облегчения изучения Корана и
+              распространения его с помощью современных технологий.
+            </p>
+          </div>
+        </div>
+        <div class="card p-8 mt-6">
+          <!-- Прогресс -->
+          <div class="w-full bg-gray-300 rounded-xl h-4 mt-4">
+            <div
+              class="bg-green-600 h-4 rounded-xl transition-all"
+              :style="{width: progress+'%'}"
+            ></div>
+          </div>
+          <!-- Логи -->
+          <div class="mt-10">
+            <h3 class="text-lg font-semibold mb-3 flex items-center gap-2">
+              <i class="fas fa-terminal text-green-600"></i> Логи выполнения
+            </h3>
+            <div
+              class="bg-gray-900 text-green-200 rounded-xl p-4 h-64 overflow-y-auto font-mono text-sm"
+            >
+              <template x-for="(log, i) in logs" :key="i">
+                <div>
+                  [<span class="text-gray-400" x-text="log.time"></span>]
+                  <span x-text="log.message"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function app() {
+        return {
+          currentPage: "form",
+          surah: "",
+          range: "",
+          photoPreview: null,
+          photoFile: null,
+          logs: [{ time: "00:00:00", message: "Готов к работе." }],
+          progress: 0,
+          processing: false,
+
+          // --- Настройки Telegram ---
+          token: "",
+          chatid: "",
+          language: "ru",
+
+          addLog(message) {
+            const now = new Date().toLocaleTimeString();
+            this.logs.push({ time: now, message });
+            this.$nextTick(() => {
+              const container = document.querySelector(".overflow-y-auto");
+              container.scrollTop = container.scrollHeight;
+            });
+          },
+
+          handlePhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+              this.photoFile = file;
+              this.photoPreview = URL.createObjectURL(file);
+              this.addLog("Фото выбрано: " + file.name);
+              if (window.electronAPI?.uploadPhoto) {
+                window.electronAPI.uploadPhoto(file);
+              }
+            }
+          },
+
+          startVideo() {
+            if (!this.surah || !this.range) {
+              this.addLog("❌ Ошибка: заполните все поля!");
+              return;
+            }
+            if (this.surah < 1 || this.surah > 114) {
+              this.addLog("❌ Ошибка: номер суры от 1 до 114!");
+              return;
+            }
+            if (!this.photoFile) {
+              this.addLog("❌ Ошибка: обложка видео не загружена");
+              return;
+            }
+
+            this.progress = 0;
+            this.processing = true;
+            this.addLog("🚀 Запуск процесса...");
+
+            let photoName = this.photoFile ? this.photoFile.name : null;
+
+            if (window.electronAPI?.startProcess) {
+              window.electronAPI.startProcess(
+                this.surah,
+                this.range,
+                photoName
+              );
+            }
+          },
+
+          stopVideo() {
+            this.addLog("⏹ Остановка процесса...");
+            if (window.electronAPI?.stopProcess) {
+              window.electronAPI.stopProcess();
+            }
+            this.processing = false;
+            this.progress = 0;
+          },
+
+          startTelegram() {
+            // if (!this.surah || !this.range) {
+            //   this.addLog("❌ Ошибка: заполните все поля!");
+            //   return;
+            // }
+            // if (this.surah < 1 || this.surah > 114) {
+            //   this.addLog("❌ Ошибка: номер суры от 1 до 114!");
+            //   return;
+            // }
+            // if (!this.photoFile) {
+            //   this.addLog("❌ Ошибка: обложка видео не загружена");
+            //   return;
+            // }
+            this.processing = true;
+            this.addLog("🚀 Запуск процесса...");
+
+            // let photoName = this.photoFile ? this.photoFile.name : null;
+
+            if (window.electronAPI?.telegramProcess) {
+              window.electronAPI.telegramProcess(this.token, this.chatid);
+            }
+          },
+
+          // async sendMessage() {
+          //   if (!this.botToken || !this.chatId) {
+          //     this.addTelegramLog("❌ Ошибка: заполните токен и chatId");
+          //     return;
+          //   }
+
+          //   const url = `https://api.telegram.org/bot${this.botToken}/sendMessage`;
+          //   const text =
+          //     this.language === "ru"
+          //       ? "Тестовое сообщение из Husary Video Maker ✅"
+          //       : this.language === "en"
+          //       ? "Test message from Husary Video Maker ✅"
+          //       : "رسالة اختبار من Husary Video Maker ✅";
+
+          //   try {
+          //     const res = await fetch(url, {
+          //       method: "POST",
+          //       headers: { "Content-Type": "application/json" },
+          //       body: JSON.stringify({ chat_id: this.chatId, text }),
+          //     });
+          //     const data = await res.json();
+          //     if (data.ok) {
+          //       this.addTelegramLog("📨 Сообщение отправлено успешно");
+          //     } else {
+          //       this.addTelegramLog("⚠️ Ошибка: " + JSON.stringify(data));
+          //     }
+          //   } catch (err) {
+          //     this.addTelegramLog("❌ Ошибка сети: " + err.message);
+          //   }
+          // },
+
+          init() {
+            if (window.electronAPI?.onLog) {
+              window.electronAPI.onLog((msg) => {
+                this.addLog(msg);
+              });
+            }
+
+            if (window.electronAPI?.onProgress) {
+              window.electronAPI.onProgress((percent) => {
+                this.progress = percent;
+                if (percent === 100) {
+                  this.processing = false;
+                  this.addLog("✅ Видео успешно создано!");
+                }
+              });
+            }
+          },
+        };
+      }
+    </script>
+  </body>
+</html>
